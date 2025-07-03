@@ -1,0 +1,68 @@
+@RealEstate_HostAddress = http://localhost:5252
+
+GET {{RealEstate_HostAddress}}/api/Properties/GetAllProperties
+Accept: application/json
+
+###
+
+
+@RealEstate_HostAddress = https://localhost:7096
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmE2NmJhYi1iMDA2LTRiYTgtYjk5Yy1lYzI5ZTc0ZjNjMjMiLCJlbWFpbCI6Ik95ZXR1bmppMzFAZ21haWwuY29tIiwiU2VsbGVySWQiOiI2YmE2NmJhYi1iMDA2LTRiYTgtYjk5Yy1lYzI5ZTc0ZjNjMjMiLCJSb2xlIjoiU2VsbGVyIiwianRpIjoiYTI1YzJkOTItNmQ3Yy00M2JkLWJmMTAtZmIzZDNhMTZkOTI2IiwiZXhwIjoxNzUyMDk4NjczLCJpc3MiOiJiQCRAJiRnOHVCOUV3TGNfR0xwN0pWZ1Y4ZXBMelJlWnI3SGFBIn0.6qoX09E_cMtUoLh3IUAvuhYP2ANuhf-RB7rlumlYAG0
+
+POST {{RealEstate_HostAddress}}/api/Properties/CreateProperty
+//Authorization: Bearer {{token}}
+Accept: application/json
+Content-Type: multipart/form-data
+
+--boundary
+Content-Disposition: form-data; name="Title"
+
+My First Property
+--boundary
+Content-Disposition: form-data; name="Description"
+
+Spacious duplex in Lekki.
+--boundary
+Content-Disposition: form-data; name="Price"
+
+250000000
+--boundary
+Content-Disposition: form-data; name="Location"
+
+Lekki Phase 1
+--boundary
+Content-Disposition: form-data; name="Bvn"
+
+12345678901
+--boundary
+Content-Disposition: form-data; name="Nin"
+
+98765432109
+--boundary
+Content-Disposition: form-data; name="PropertyType"
+
+0
+--boundary
+Content-Disposition: form-data; name="LandType"
+
+0
+--boundary
+Content-Disposition: form-data; name="BuildingType"
+
+0
+--boundary
+Content-Disposition: form-data; name="DefaultImage"; filename="defaultimage.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/defaultimage.jpg
+--boundary
+Content-Disposition: form-data; name="ImageUrls"; filename="image1.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/image1.jpg
+--boundary
+Content-Disposition: form-data; name="ImageUrls"; filename="image2.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/image2.jpg
+--boundary--
