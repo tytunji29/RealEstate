@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -58,7 +59,7 @@ namespace RealEstate.Controllers
             return Ok(new ReturnObject { Message = "Registration successful.", Status = true });
         }
 
-        [Authorize]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("adminapprove")]
         public async Task<IActionResult> AdminApprove(SellerDto sellerDto)
         {
@@ -73,7 +74,8 @@ namespace RealEstate.Controllers
                 return BadRequest(new ReturnObject { Message = "Invalid Id", Status = false });
 
             var rec = validated.FirstOrDefault();
-            var sellInfo = await _unitOfWork.SellerInfos.FindAsync(o => o.UserId.ToString() == rec.SellerId);
+           // Guid sellerIdx = Guid.Parse(rec.SellerId);
+            var sellInfo = await _unitOfWork.SellerInfos.FindAsync(o => o.UserId == rec.SellerId);
             SellerInfo? sl = sellInfo.FirstOrDefault();
             if (sellerDto.ApprovalStatus.ToLower() == "rejected")
             {
@@ -87,9 +89,9 @@ namespace RealEstate.Controllers
                 sl.ActedOnBy = sellerId;
                 sl.UpdatedAt = DateTime.Now;
                 sl.ApprovalStatus = sellerDto.ApprovalStatus;
-
                 _unitOfWork.SellerInfos.Update(sl);
-                var dto = JsonSerializer.Deserialize<PropertyDto>(rec.Data);
+
+                var dto = JsonSerializer.Deserialize<PropertyDtoII>(rec.Data);
                 var property = await _propertyRepository.PreparePropertyFromDtoAsync(dto, sellerId);
                 // ✅ Save to DB
                 await _propertyRepository.AddAsync(property);

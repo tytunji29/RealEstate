@@ -11,14 +11,31 @@ using RealEstate.Models;
 using RealEstate.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<UtcDateInterceptor>();
+// 1️⃣ DB Context
+//builder.Services.AddDbContext<RealEstateDbContext>(options =>
+//    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
-builder.Services.AddDbContext<RealEstateDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<RealEstateDbContext>((sp, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.AddInterceptors(sp.GetRequiredService<UtcDateInterceptor>()); // Plug in interceptor
+});
 
-builder.Services.AddControllers();
+// 2️⃣ Controllers with consistent validation handling
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var details = new ValidationProblemDetails(context.ModelState);
+            details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id;
+            return new BadRequestObjectResult(details);
+        };
+    });
 
-// Cloudinary configuration
+// 3️⃣ Cloudinary Configuration
 var account = new Account(
     builder.Configuration["appSettings:CloudinaryUsername"],
     builder.Configuration["appSettings:CloudinaryApiKey"],
@@ -27,20 +44,66 @@ var account = new Account(
 var cloudinary = new Cloudinary(account) { Api = { Secure = true } };
 builder.Services.AddSingleton(cloudinary);
 
-// Identity
+// 4️⃣ Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<RealEstateDbContext>()
     .AddDefaultTokenProviders();
 
-// Services
+// 🔹 Prevent redirect to /Account/Login on API unauthorized calls
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+});
+
+// 5️⃣ Services
 builder.Services.AddScoped<IUploadFileService, UploadFileService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 
-// Swagger with JWT
+// 6️⃣ JWT Authentication
+var jwtIssuer = builder.Configuration["appSettings:JwtIssuer"]
+    ?? "RealEstateAPI";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["appSettings:JwtKey"]!)
+            )
+        };
+    });
+
+// 7️⃣ Swagger with JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "RealEstate API", Version = "v1" });
+
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -57,58 +120,8 @@ builder.Services.AddSwaggerGen(c =>
         { securityScheme, Array.Empty<string>() }
     });
 });
-builder.Services.AddControllers()
-    .ConfigureApiBehaviorOptions(options => {
-        options.SuppressModelStateInvalidFilter = true;
-        options.InvalidModelStateResponseFactory = context => {
-            var details = new ValidationProblemDetails(context.ModelState);
-            details.Extensions["traceId"] = System.Diagnostics.Activity.Current?.Id;
-            return new BadRequestObjectResult(details);
-        };
-    });
-// JWT Authentication
-//var jwtIssuer = builder.Configuration["appSettings:EfcKey"] ?? throw new InvalidOperationException("Jwt:Issuer missing");
-//var jwtAudience = builder.Configuration["appSettings:JwtAudience"] ?? throw new InvalidOperationException("Jwt:Audience missing");
-//var jwtKey = builder.Configuration["appSettings:JwtKey"] ?? throw new InvalidOperationException("Jwt:Key missing");
 
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-//    {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-//            ValidIssuer = jwtIssuer,
-//            ValidAudience = jwtAudience,
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-//        };
-//    });
-
-
-// CORRECTED JWT SETUP
-var jwtIssuer = builder.Configuration["appSettings:JwtIssuer"]
-    ?? "b@$&$g8uB9EwLc_GLp7JVgV8epLzReZr7HaA"; // From your token
-
-var jwtAudience = builder.Configuration["appSettings:JwtAudience"]
-    ?? "your_api_audience"; // Set this if you use audiences
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = false, // Disable since token has no audience
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                builder.Configuration["appSettings:JwtKey"]!
-            ))
-        };
-    });
-// CORS
+// 8️⃣ CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -117,14 +130,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Pipeline
+// 9️⃣ Middleware Pipeline
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("AllowFrontend");
-
 app.UseAuthentication();
 app.UseAuthorization();
 

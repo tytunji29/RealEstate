@@ -1,6 +1,7 @@
-﻿namespace RealEstate.Helpers
-{
-    public enum PropertyType { Land, Building }
-    public enum LandType { Acre, Hectare }
-    public enum BuildingType { Duplex, Flat, Bungalow }
-}
+﻿namespace RealEstate.Helpers;
+
+public enum PropertyType { All,Land, Building }
+public enum LandType { All,Acre, Hectare }
+public enum BuildingType { All,Duplex, Flat, Bungalow, Face2Face }
+
+
