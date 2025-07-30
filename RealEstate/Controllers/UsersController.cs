@@ -49,8 +49,9 @@ namespace RealEstate.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
-                UserRole = model.Role,
-                Address = model.Address
+                UserRole = "customer", //by defult
+                Address = model.Address,
+                CreatedDate = DateTime.Now
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -74,7 +75,7 @@ namespace RealEstate.Controllers
                 return BadRequest(new ReturnObject { Message = "Invalid Id", Status = false });
 
             var rec = validated.FirstOrDefault();
-           // Guid sellerIdx = Guid.Parse(rec.SellerId);
+            // Guid sellerIdx = Guid.Parse(rec.SellerId);
             var sellInfo = await _unitOfWork.SellerInfos.FindAsync(o => o.UserId == rec.SellerId);
             SellerInfo? sl = sellInfo.FirstOrDefault();
             if (sellerDto.ApprovalStatus.ToLower() == "rejected")
@@ -102,6 +103,38 @@ namespace RealEstate.Controllers
             return Ok(ret);
         }
 
+        [HttpGet("AllCustomerUsers")]
+        public async Task<IActionResult> AllCustomerUsers(int pgNo = 1, int pgSize = 10, string? search = "")
+        {
+            var user = await _unitOfWork.Users.GetAllAsync();
+            //select few entities 
+            //add search filter 
+            if (!string.IsNullOrEmpty(search))
+            {
+                user = user.Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                      u.FullName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                                      u.PhoneNumber.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+            var totalRecords = user.Count();
+            user = user.OrderByDescending(u => u.CreatedDate)
+                    .Skip((pgNo - 1) * pgSize)
+                    .Take(pgSize)
+                    .ToList();
+            //pagination logic
+
+            var users = user.Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.PhoneNumber,
+                u.UserRole,
+                u.Address,
+                u.CreatedDate
+            }).ToList();
+
+            return Ok(new ReturnObject { Message = "Record Found Successfully", Status = true, Data = new { users = users, totalRecords = totalRecords } });
+        }
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
