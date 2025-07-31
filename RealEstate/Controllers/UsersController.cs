@@ -51,6 +51,7 @@ namespace RealEstate.Controllers
                 PhoneNumber = model.PhoneNumber,
                 UserRole = "customer", //by defult
                 Address = model.Address,
+                Status = "Active",
                 CreatedDate = DateTime.Now
             };
 
@@ -102,6 +103,40 @@ namespace RealEstate.Controllers
             await _unitOfWork.CompleteAsync();
             return Ok(ret);
         }
+        [HttpPost("changeuserstatus")]
+        public async Task<IActionResult> ChangeUserStatus(SellerDto sellerDto)
+        {
+            var ret = new ReturnObject();
+            ret.Status = true;
+            ret.Message = "Record Updated Successfully";
+            
+            var user = await _unitOfWork.Users.GetByIdAsync(sellerDto.Id);
+            if (user == null)
+                return BadRequest(new ReturnObject { Message = "Invalid Id", Status = false });
+
+            if (sellerDto.ApprovalStatus.ToLower() == "rejected")
+            {
+                user.Status = "Rejected";
+            }
+            switch (sellerDto.ApprovalStatus.ToLower())
+            {
+
+                case "active":
+                    user.Status = "Active";
+                    break;
+                case "rejected":
+                    user.Status = "Inactive";
+                    break; 
+                case "admin":
+                    user.UserRole = "admin";
+                    break;
+                default:
+                    break;
+            }
+            _unitOfWork.Users.Update(user);
+            await _unitOfWork.CompleteAsync();
+            return Ok(ret);
+        }
 
         [HttpGet("AllCustomerUsers")]
         public async Task<IActionResult> AllCustomerUsers(int pgNo = 1, int pgSize = 10, string? search = "")
@@ -138,6 +173,11 @@ namespace RealEstate.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
+            var valid=await _unitOfWork.Users.FindAsync(o => o.Email == model.Email);
+            if (valid == null || !valid.Any())
+                return Unauthorized(new ReturnObject { Message = "Invalid Email or Password", Status = false });
+            if(valid.FirstOrDefault().Status.ToLower() != "active")
+                return Unauthorized(new ReturnObject { Message = "Your Account is not active, please contact support.", Status = false });
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null) return Unauthorized();
 

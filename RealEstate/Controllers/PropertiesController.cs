@@ -91,7 +91,7 @@ public class PropertiesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetPropertyById(Guid id)
+    public async Task<IActionResult> GetPropertyById(string id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
         if (property == null) return NotFound();
@@ -100,7 +100,7 @@ public class PropertiesController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<IActionResult> UpdateProperty(Guid id, [FromBody] PropertyDto dto)
+    public async Task<IActionResult> UpdateProperty(string id, [FromBody] PropertyDto dto)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
         if (property == null) return NotFound();
@@ -121,7 +121,7 @@ public class PropertiesController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProperty(Guid id)
+    public async Task<IActionResult> DeleteProperty(string id)
     {
         var property = await _propertyRepository.GetByIdAsync(id);
         if (property == null) return NotFound();
