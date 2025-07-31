@@ -49,7 +49,7 @@ namespace RealEstate.Controllers
                 Email = model.Email,
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
-                UserRole = "customer", //by defult
+                UserRole = "Buyer", //by defult
                 Address = model.Address,
                 Status = "Active",
                 CreatedDate = DateTime.Now
