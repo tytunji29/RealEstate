@@ -163,6 +163,7 @@ namespace RealEstate.Controllers
                 u.Email,
                 u.FullName,
                 u.PhoneNumber,
+                u.Status,
                 u.UserRole,
                 u.Address,
                 u.CreatedDate
