@@ -122,10 +122,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // 8️⃣ CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowFrontend",
+//        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+//});
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("AllowLocalhost",
+        policy => policy
+            .WithOrigins("http://localhost:3000") // allow your frontend
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 var app = builder.Build();
@@ -135,8 +144,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseRouting();
-app.UseCors("AllowFrontend");
+app.UseRouting(); app.UseCors("AllowLocalhost");
 app.UseAuthentication();
 app.UseAuthorization();
 
