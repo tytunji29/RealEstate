@@ -20,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly RealEstateDbContext _context;
 
     private readonly IUploadFileService _uploadFileService;
+    private readonly IPinnacleService _pinnacleService;
     public IPropertyRepository Properties { get; private set; }
     public IGenericRepository<SellerInfo> SellerInfos { get; }
     public IGenericRepository<UnverifiedSellerProduct> UnverifiedSellerProducts { get; }
@@ -28,11 +29,12 @@ public class UnitOfWork : IUnitOfWork
     //public IGenericRepository<ViewRecord> ViewRecords { get; private set; }
     public IGenericRepository<ApplicationUser> Users { get; private set; }
 
-    public UnitOfWork(RealEstateDbContext context, IUploadFileService uploadFileService)
+    public UnitOfWork(RealEstateDbContext context, IUploadFileService uploadFileService, IPinnacleService pinnacleService)
     {
         _context = context;
         _uploadFileService = uploadFileService;
-        Properties = new PropertyRepository(_context, _uploadFileService);
+        _pinnacleService = pinnacleService;
+        Properties = new PropertyRepository(_context, _pinnacleService, _uploadFileService);
         PropertyImages = new GenericRepository<PropertyImage>(_context);
         UnverifiedSellerProducts = new GenericRepository<UnverifiedSellerProduct>(_context);
         SellerInfos = new GenericRepository<SellerInfo>(_context);

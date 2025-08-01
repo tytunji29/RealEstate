@@ -42,7 +42,6 @@ public class PropertiesController : ControllerBase
             //check if the seller as been validated
             var validated = await _unitOfWork.SellerInfos.FindAsync(o => o.UserId == sellerId);
 
-            var property = await _propertyRepository.PreparePropertyFromDtoAsync(dto, sellerId);
             var rec = validated.FirstOrDefault();
             if (rec == null || rec.ApprovalStatus == "Pending")
             {
@@ -52,25 +51,16 @@ public class PropertiesController : ControllerBase
                     Bvn = dto.Bvn,
                     UserId = sellerId,
                     ApprovalStatus = "Pending",
-                    ActedOnBy=""
+                    VirtualAccount="",
+                    ActedOnBy = ""
                 };
                 await _unitOfWork.SellerInfos.AddAsync(si);
-                var re = new UnverifiedSellerProduct
-                {
-                    Data = JsonSerializer.Serialize(property),
-                    SellerId = sellerId
-                };
-                await _unitOfWork.UnverifiedSellerProducts.AddAsync(re);
-                await _unitOfWork.CompleteAsync();
-
-                return Ok(new ReturnObject { Data = null, Message = "Record Stored Pending Approval As This Is Your First Upload", Status = true });
             }
 
-            // ✅ Map to entity
-            // ✅ Save to DB
-            await _propertyRepository.AddAsync(property);
+            var property = await _propertyRepository.PrepareAndSavePropertyAsync(dto, sellerId);
             await _unitOfWork.CompleteAsync();
-            return Ok(new ReturnObject { Data = null, Message = "Record Saved Successfully", Status = true });
+
+            return Ok(new ReturnObject { Data = null, Message = "Record Stored Pending Approval As This Is Your First Upload", Status = true });
         }
         catch (Exception ex)
         {
@@ -78,16 +68,25 @@ public class PropertiesController : ControllerBase
             throw ex;
         }
     }
-
-
-    // [Authorize]
     [HttpGet("GetAllProperties")]
-    public async Task<IActionResult> GetAllProperties()
+    public async Task<IActionResult> GetAllProperties(int pgNo = 1, int pgSize = 10)
     {
-        var properties = await _propertyRepository.GetAllPropertiesAsync();
-        if (properties == null || !properties.Any())
-            return NotFound("No properties found.");
-        return Ok(properties.OrderByDescending(o => o.Id).ToList());
+        var properties = await _propertyRepository.GetAllPropertiesAsync(pgNo,pgSize,"Approved");
+        if (properties.Item1 == null || !properties.Item1.Any())
+            return Ok(new ReturnObject { Data = null, Message = "No properties found.", Status = false });
+        var rec= properties.Item1.OrderByDescending(o => o.Id).ToList();
+
+        return Ok(new ReturnObject { Data = new { record = rec, totalCount = properties.Item2 }, Message = "Record Found Successfully", Status = true });
+    }
+    [HttpGet("GetAllPendingProperties")]
+    public async Task<IActionResult> GetAllPendingProperties(int pgNo = 1, int pgSize = 10)
+    {
+        var properties = await _propertyRepository.GetAllPropertiesAsync(pgNo, pgSize, "pending");
+        if (properties.Item1 == null || !properties.Item1.Any())
+            return Ok(new ReturnObject { Data = null, Message ="No properties found.", Status = false });
+        var rec = properties.Item1.OrderByDescending(o => o.Id).ToList();
+
+        return Ok(new ReturnObject { Data = new { record = rec, totalCount = properties.Item2 }, Message = "Record Found Successfully", Status = true });
     }
 
     [HttpGet("{id}")]
@@ -117,6 +116,18 @@ public class PropertiesController : ControllerBase
         await _unitOfWork.CompleteAsync();
 
         return Ok(property);
+    }
+    [HttpPost("DecidePropertyById/{id}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> DecideProperty(string id, [FromBody] PropertyDecisionDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var property = await _propertyRepository.UpdateDecision(id, dto.Status, userId);
+        if (@property)
+            return Ok(new ReturnObject { Data = null, Message = "No properties found with this Id", Status = false });
+        await _unitOfWork.CompleteAsync();
+
+        return Ok(new ReturnObject { Data = null, Message = "Record Acted On Successfully", Status = true });
     }
 
     [Authorize]

@@ -21,6 +21,7 @@ builder.Services.AddDbContext<RealEstateDbContext>((sp, options) =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.AddInterceptors(sp.GetRequiredService<UtcDateInterceptor>()); // Plug in interceptor
 });
+builder.Services.AddHttpClient<PinnacleService>();
 
 // 2️⃣ Controllers with consistent validation handling
 builder.Services.AddControllers()
@@ -77,6 +78,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // 5️⃣ Services
 builder.Services.AddScoped<IUploadFileService, UploadFileService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IPinnacleService, PinnacleService>();
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 
 // 6️⃣ JWT Authentication

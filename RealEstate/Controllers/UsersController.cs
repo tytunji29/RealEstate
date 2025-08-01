@@ -61,48 +61,7 @@ namespace RealEstate.Controllers
             return Ok(new ReturnObject { Message = "Registration successful.", Status = true });
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("adminapprove")]
-        public async Task<IActionResult> AdminApprove(SellerDto sellerDto)
-        {
-            var ret = new ReturnObject();
-            var sellerId = User.FindFirstValue("SellerId");
-            var role = User.FindFirstValue("Role");
-            if (role.ToLower() != "admin")
-                return BadRequest(new ReturnObject { Message = "Invalid Role", Status = false });
-
-            var validated = await _unitOfWork.UnverifiedSellerProducts.FindAsync(o => o.Id.ToString() == sellerDto.Id);
-            if (validated == null)
-                return BadRequest(new ReturnObject { Message = "Invalid Id", Status = false });
-
-            var rec = validated.FirstOrDefault();
-            // Guid sellerIdx = Guid.Parse(rec.SellerId);
-            var sellInfo = await _unitOfWork.SellerInfos.FindAsync(o => o.UserId == rec.SellerId);
-            SellerInfo? sl = sellInfo.FirstOrDefault();
-            if (sellerDto.ApprovalStatus.ToLower() == "rejected")
-            {
-                _unitOfWork.SellerInfos.Remove(sl);
-                _unitOfWork.UnverifiedSellerProducts.Remove(rec);
-
-                ret = new ReturnObject { Message = "Rejected successful.", Status = true };
-            }
-            else
-            {
-                sl.ActedOnBy = sellerId;
-                sl.UpdatedAt = DateTime.Now;
-                sl.ApprovalStatus = sellerDto.ApprovalStatus;
-                _unitOfWork.SellerInfos.Update(sl);
-
-                var dto = JsonSerializer.Deserialize<PropertyDtoII>(rec.Data);
-                var property = await _propertyRepository.PreparePropertyFromDtoAsync(dto, sellerId);
-                // ✅ Save to DB
-                await _propertyRepository.AddAsync(property);
-
-                ret = new ReturnObject { Message = "Approval successful.", Status = true };
-            }
-            await _unitOfWork.CompleteAsync();
-            return Ok(ret);
-        }
+       
         [HttpPost("changeuserstatus")]
         public async Task<IActionResult> ChangeUserStatus(SellerDto sellerDto)
         {

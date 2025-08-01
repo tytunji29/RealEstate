@@ -11,6 +11,9 @@ public class Property
     public string DefaultImage { get; set; }
     public decimal Price { get; set; }
     public string Location { get; set; }
+    public string ApprovalStatus { get; set; } 
+    public string ActedOnBy { get; set; } 
+    public DateTime ActedOnDate { get; set; } 
     public PropertyType PropertyType { get; set; }
     public LandType? LandType { get; set; }
     public BuildingType? BuildingType { get; set; }
