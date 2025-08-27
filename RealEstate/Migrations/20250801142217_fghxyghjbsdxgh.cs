@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace RealEstate.Migrations
 {
     /// <inheritdoc />
-    public partial class hshjhhjhjh : Migration
+    public partial class fghxyghjbsdxgh : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -34,6 +34,9 @@ namespace RealEstate.Migrations
                     FullName = table.Column<string>(type: "text", nullable: false),
                     Address = table.Column<string>(type: "text", nullable: false),
                     PhoneNumber = table.Column<string>(type: "text", nullable: false),
+                    UserRole = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -51,6 +54,38 @@ namespace RealEstate.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SellerInfo",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Bvn = table.Column<string>(type: "text", nullable: false),
+                    Nin = table.Column<string>(type: "text", nullable: false),
+                    VirtualAccount = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ApprovalStatus = table.Column<string>(type: "text", nullable: false),
+                    ActedOnBy = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SellerInfo", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UnverifiedSellerProducts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    SellerId = table.Column<string>(type: "text", nullable: false),
+                    Data = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UnverifiedSellerProducts", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -186,8 +221,12 @@ namespace RealEstate.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
+                    DefaultImage = table.Column<string>(type: "text", nullable: false),
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
+                    ApprovalStatus = table.Column<string>(type: "text", nullable: false),
+                    ActedOnBy = table.Column<string>(type: "text", nullable: false),
+                    ActedOnDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PropertyType = table.Column<int>(type: "integer", nullable: false),
                     LandType = table.Column<int>(type: "integer", nullable: true),
                     BuildingType = table.Column<int>(type: "integer", nullable: true),
@@ -368,6 +407,12 @@ namespace RealEstate.Migrations
 
             migrationBuilder.DropTable(
                 name: "PropertyViewers");
+
+            migrationBuilder.DropTable(
+                name: "SellerInfo");
+
+            migrationBuilder.DropTable(
+                name: "UnverifiedSellerProducts");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

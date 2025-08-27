@@ -12,8 +12,8 @@ using RealEstate.Models;
 namespace RealEstate.Migrations
 {
     [DbContext(typeof(RealEstateDbContext))]
-    [Migration("20250801101927_drcfgvhbjnsksdfgh")]
-    partial class drcfgvhbjnsksdfgh
+    [Migration("20250801142217_fghxyghjbsdxgh")]
+    partial class fghxyghjbsdxgh
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

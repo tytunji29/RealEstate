@@ -70,6 +70,7 @@ public class PropertiesController : ControllerBase
     }
     [HttpGet("GetAllProperties")]
     public async Task<IActionResult> GetAllProperties(int pgNo = 1, int pgSize = 10)
+    
     {
         var properties = await _propertyRepository.GetAllPropertiesAsync(pgNo,pgSize,"Approved");
         if (properties.Item1 == null || !properties.Item1.Any())
