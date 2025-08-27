@@ -133,7 +133,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost",
         policy => policy
-            .WithOrigins("http://localhost:3000") // allow your frontend
+            .WithOrigins("http://localhost:3000", "https://realestatefe-4zpp.onrender.com") // allow your frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
