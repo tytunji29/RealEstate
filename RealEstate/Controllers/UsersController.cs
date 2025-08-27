@@ -133,6 +133,7 @@ namespace RealEstate.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto model)
         {
+            bool isFirstPoster = true;
             var valid=await _unitOfWork.Users.FindAsync(o => o.Email == model.Email);
             if (valid == null || !valid.Any())
                 return Unauthorized(new ReturnObject { Message = "Invalid Email or Password", Status = false });
@@ -153,6 +154,14 @@ namespace RealEstate.Controllers
             new Claim(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+            if(user.UserRole.ToLower() == "buyer")
+            {
+                var sellerInfo = await _unitOfWork.Properties.FindAsync(o => o.SellerId == user.Id && o.ApprovalStatus.ToLower()=="approved");
+                if (sellerInfo != null && sellerInfo.Any())
+                {
+                    isFirstPoster = false;
+                }
+            }
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["appSettings:JwtKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
@@ -175,7 +184,7 @@ namespace RealEstate.Controllers
                                      .Select(e => new { Id = (int)e, Name = e.ToString() })
                                      .ToList();
 
-            return Ok(new ReturnObject { Message = $"Welcome {user.Email}", Status = true, Data = new { BuildingType, LandType, propertyTypes, token = new JwtSecurityTokenHandler().WriteToken(token), role = user.UserRole, email = user.Email } });
+            return Ok(new ReturnObject { Message = $"Welcome {user.Email}", Status = true, Data = new { isFirstPoster,BuildingType, LandType, propertyTypes, token = new JwtSecurityTokenHandler().WriteToken(token), role = user.UserRole, email = user.Email } });
         }
     }
 }
