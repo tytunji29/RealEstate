@@ -52,7 +52,7 @@ namespace RealEstate.Controllers
                 UserRole = "Buyer", //by defult
                 Address = model.Address,
                 Status = "Active",
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
