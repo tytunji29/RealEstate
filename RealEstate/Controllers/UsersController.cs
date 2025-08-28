@@ -56,7 +56,7 @@ namespace RealEstate.Controllers
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded) return BadRequest(new ReturnObject { Message = "An Error Occured.", Status = false });
+            if (!result.Succeeded) return BadRequest(new ReturnObject { Message = $"An Error Occured As, {result.Errors.FirstOrDefault().Description}", Status = false });
 
             return Ok(new ReturnObject { Message = "Registration successful.", Status = true });
         }
