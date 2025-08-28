@@ -1,11 +1,14 @@
 ﻿using System.Text;
+using System.Text.Json;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RealEstate;
 using RealEstate.Helpers;
 using RealEstate.Models;
 using RealEstate.Repository;
@@ -144,9 +147,32 @@ var app = builder.Build();
 // 9️⃣ Middleware Pipeline
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(error, "Unhandled exception");
+
+        var result = JsonSerializer.Serialize(new ReturnObject
+        {
+            Status = false,
+            Message = error?.Message ?? "An unexpected error occurred."
+        });
+
+        await context.Response.WriteAsync(result);
+    });
+});
+
 
 app.UseHttpsRedirection();
-app.UseRouting(); app.UseCors("AllowLocalhost");
+app.UseRouting();
+app.UseCors("AllowLocalhost");
 app.UseAuthentication();
 app.UseAuthorization();
 
