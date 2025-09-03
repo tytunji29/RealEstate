@@ -82,6 +82,8 @@ public class PropertiesReturn
     public DateTime CreatedAt { get; set; }
     public string PropertyType { get; set; }
     public string LandType { get; set; }
+    public string SellerPhoneNumber { get; set; }
+    public string SellerFullName { get; set; }
     public string BuildingType { get; set; }
     public List<string> Images { get; set; }
     public int RemainingImages { get; set; }

@@ -35,7 +35,8 @@ public class PropertyRepository : GenericRepository<Property>, IPropertyReposito
         string strStatus = status.ToLower();
         var baseQuery = _context.Properties
             .Where(o => o.ApprovalStatus.ToLower() == strStatus)
-            .Include(p => p.Images);
+            .Include(p => p.Images)
+            .Include(s=>s.Seller);
 
         int totalRecords = await baseQuery.CountAsync();
 
@@ -51,6 +52,7 @@ public class PropertyRepository : GenericRepository<Property>, IPropertyReposito
          p.DefaultImage,
          p.Price,
          p.Location,
+         p.Seller,
          p.PropertyType,
          p.LandType,
          p.BuildingType,
@@ -67,8 +69,9 @@ public class PropertyRepository : GenericRepository<Property>, IPropertyReposito
             Location = p.Location,
             PropertyType = p.PropertyType.ToString(),
             LandType = p.LandType?.ToString(),
+            SellerFullName = p.Seller?.FullName,
+            SellerPhoneNumber = p.Seller?.PhoneNumber,
             BuildingType = p.BuildingType?.ToString(),
-
             Images = new[] { p.DefaultImage }
         .Concat(p.Images ?? new List<string>())
         .ToList(),
